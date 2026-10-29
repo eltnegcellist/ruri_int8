@@ -8,6 +8,14 @@ This repository distributes the Mitsukotoba-specific INT8 ONNX conversion of [cl
 - License: Apache-2.0; see accompanying license, attribution and model card documents.
 - This is **not an official cl-nagoya quantization**. The ONNX graph and embedding table were customized for Mitsukotoba.
 
-The derived classification heads (Topic/Interaction/Intent/State) and tokenizer files are provided separately from the model weights and are required by Mitsukotoba's classifier. Verify hashes before use. Files may be published in several stages during setup.
+The derived classification heads (Topic/Interaction/Intent/State) and tokenizer files are provided separately from the model weights and are required by Mitsukotoba's classifier. Verify hashes before use. The published release files are checked by the GitHub Actions import workflow. Model binaries are distributed by GitHub's raw file endpoint.
 
 For model usage, please refer to the [Mitsukotoba Web app](https://github.com/eltnegcellist/Web_EmmaLocal_English_for_babies).
+
+## Browser download
+
+The application fetches the SHA-256-pinned model from an immutable Git commit:
+
+https://raw.githubusercontent.com/eltnegcellist/ruri_int8/181a9f2a8b3706d430116ed8ae992866cb603b26/model.onnx
+
+The [browser delivery check](https://github.com/eltnegcellist/ruri_int8/actions/runs/40809777833) verified HTTP 200, `Access-Control-Allow-Origin: *`, exactly 71,248,404 bytes and the SHA-256 above. The model URL is public; any user can obtain the exact weights without GitHub authentication. GitHub Pages/R2 is not required for this distribution.
