@@ -1,0 +1,43 @@
+name: Import pinned Ruri INT8 model
+
+on:
+  push:
+    paths:
+      - .github/workflows/import-model.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and verify pinned model and legal notices
+        env:
+          SOURCE_REF: 9eb6ceb53ba5ecf1a155cab54f886e647083af29
+          EXPECTED_SHA: bd500193003fdeaba8c5422a47b974b40b49a5e0c91285c76f6bd949d2205264
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://raw.githubusercontent.com/eltnegcellist/Web_EmmaLocal_English_for_babies/${SOURCE_REF}/semantic-assets/ruri70-int8-bd500193"
+          files=(
+            model.onnx tokenizer.json tokenizer_config.json special_tokens_map.json config.json
+            heads-config.json head-topic.f32 head-intent.f32 head-state.f32 head-interaction.f32
+            LICENSE-APACHE-2.0.txt LICENSE-MODERNBERT-MIT.txt LICENSE-TOKENIZER-MIT.txt
+            ATTRIBUTION-CHANGES.txt MODEL-CARD.md
+          )
+          for file in "${files[@]}"; do
+            curl --fail --show-error --silent --location --retry 3 --output "$file" "$base/$file"
+          done
+          test "$(wc -c < model.onnx)" -eq 71248404
+          echo "$EXPECTED_SHA  model.onnx" | sha256sum --check -
+          echo "0a94ac9a0a02c067bdef25b72ae9f4ee33f48f552e55988d444f6d25eeb1d062  tokenizer.json" | sha256sum --check -
+          git add -- "${files[@]}"
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Publish pinned Ruri INT8 model, classification heads and licenses"
+            git push origin HEAD:main
+          fi
