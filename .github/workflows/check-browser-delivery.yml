@@ -1,0 +1,36 @@
+name: Verify browser-readable public model delivery
+
+on:
+  push:
+    paths:
+      - .github/workflows/check-browser-delivery.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cors-and-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify CORS for Cloudflare Pages and GitHub Pages origins
+        shell: bash
+        env:
+          MODEL_URL: https://raw.githubusercontent.com/eltnegcellist/ruri_int8/181a9f2a8b3706d430116ed8ae992866cb603b26/model.onnx
+        run: |
+          set -euo pipefail
+          for origin in "https://example.pages.dev" "https://eltnegcellist.github.io"; do
+            curl -fLsSI --retry 3 -H "Origin: $origin" "$MODEL_URL" | tee headers.txt
+            grep -iqE '^access-control-allow-origin: (\\*|'"${origin}"')' headers.txt || {
+              echo "Model response lacks CORS allowance for $origin"; exit 1;
+            }
+          done
+      - name: Verify exact published bytes from immutable commit
+        shell: bash
+        env:
+          MODEL_URL: https://raw.githubusercontent.com/eltnegcellist/ruri_int8/181a9f2a8b3706d430116ed8ae992866cb603b26/model.onnx
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 3 --output model.onnx "$MODEL_URL"
+          test "$(wc -c < model.onnx)" -eq 71248404
+          echo "bd500193003fdeaba8c5422a47b974b40b49a5e0c91285c76f6bd949d2205264  model.onnx" | sha256sum --check -
